@@ -10,6 +10,7 @@ import json
 from gtts import gTTS
 import tempfile
 import base64
+import pandas as pd
 
 class FrenchTutor:
     def __init__(self):
@@ -240,6 +241,71 @@ class FrenchTutor:
             st.error(f"Error generating audio: {str(e)}")
             return None
 
+    def is_admin(self, username):
+        """Check if user is admin"""
+        return username == "admin"  # You can modify this to include more admin users
+
+    def get_user_stats(self):
+        """Get statistics for all users"""
+        try:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            users_db = os.path.join(script_dir, "users.db")
+            progress_db = os.path.join(script_dir, "french_progress.db")
+            
+            users_conn = sqlite3.connect(users_db)
+            progress_conn = sqlite3.connect(progress_db)
+            
+            uc = users_conn.cursor()
+            pc = progress_conn.cursor()
+            
+            # Get registered users
+            uc.execute('SELECT username, created_at FROM users')
+            registered_users = uc.fetchall()
+            
+            # Get all users' progress
+            pc.execute('''
+                SELECT user_id, COUNT(DISTINCT word) as words_practiced,
+                       COUNT(CASE WHEN attempts = 1 THEN 1 END) as perfect_words,
+                       MAX(last_practiced) as last_active
+                FROM progress
+                GROUP BY user_id
+            ''')
+            progress_data = pc.fetchall()
+            
+            # Combine the data
+            user_stats = []
+            guest_count = 0
+            
+            for user_id, words, perfect, last_active in progress_data:
+                is_guest = user_id.startswith('guest_')
+                if is_guest:
+                    guest_count += 1
+                
+                # Calculate rating
+                rating = (perfect / len(self.words) * 100) if len(self.words) > 0 else 0
+                
+                user_stats.append({
+                    'Username': user_id,
+                    'Type': 'Guest' if is_guest else 'Registered',
+                    'Words Practiced': words,
+                    'Perfect Words': perfect,
+                    'Rating': f"{rating:.1f}%",
+                    'Last Active': datetime.fromisoformat(last_active).strftime('%Y-%m-%d %H:%M')
+                })
+            
+            users_conn.close()
+            progress_conn.close()
+            
+            return {
+                'user_stats': user_stats,
+                'total_registered': len(registered_users),
+                'total_guests': guest_count
+            }
+            
+        except Exception as e:
+            st.error(f"Could not get user statistics: {str(e)}")
+            return None
+
 def main():
     st.set_page_config(page_title="French Tutor", page_icon="🇫🇷")
     
@@ -308,6 +374,46 @@ def main():
             
             Only words answered correctly on first try count towards your rating.
             """)
+
+    # Add admin dashboard
+    if tutor.is_admin(st.session_state.username):
+        st.write("---")
+        st.subheader("👑 Admin Dashboard")
+        
+        stats = tutor.get_user_stats()
+        if stats:
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Total Users", stats['total_registered'] + stats['total_guests'])
+            with col2:
+                st.metric("Registered Users", stats['total_registered'])
+            with col3:
+                st.metric("Guest Users", stats['total_guests'])
+            
+            st.write("---")
+            st.write("User Details:")
+            
+            # Create DataFrame for user stats
+            df = pd.DataFrame(stats['user_stats'])
+            
+            # Sort by Rating (descending)
+            df['Rating'] = df['Rating'].str.rstrip('%').astype(float)
+            df = df.sort_values('Rating', ascending=False)
+            df['Rating'] = df['Rating'].apply(lambda x: f"{x:.1f}%")
+            
+            # Display the DataFrame
+            st.dataframe(
+                df,
+                column_config={
+                    "Username": st.column_config.TextColumn("User", width=150),
+                    "Type": st.column_config.TextColumn("Type", width=100),
+                    "Words Practiced": st.column_config.NumberColumn("Words", width=80),
+                    "Perfect Words": st.column_config.NumberColumn("Perfect", width=80),
+                    "Rating": st.column_config.TextColumn("Rating", width=100),
+                    "Last Active": st.column_config.TextColumn("Last Active", width=150)
+                },
+                hide_index=True
+            )
 
     # Main practice area
     if 'practice_mode' not in st.session_state:
