@@ -614,6 +614,18 @@ def main():
         total_practice_words = len(st.session_state.current_words)
         st.write(f"Word {st.session_state.word_count + 1} of {total_practice_words}")
         
+        # Journey visualization
+        journey, distance = tutor.get_journey_progress(st.session_state.word_count, total_practice_words)
+        st.write("Journey to the Eiffel Tower:")
+        st.write(journey)
+        st.write(f"Distance remaining: {distance} steps")
+        
+        # Show French jokes every 3 words
+        if st.session_state.word_count > 0 and st.session_state.word_count % 3 == 0:
+            with st.expander("😄 French Joke Break!", expanded=True):
+                st.write(tutor.get_french_joke())
+                st.write("Take a breath and continue your journey! 🎨")
+        
         # Display Spanish word
         st.markdown(f"### 🇪🇸 Spanish: {st.session_state.current_word[0]}")
         
@@ -712,18 +724,6 @@ def main():
         )
     else:
         st.info("No practice sessions yet. Start practicing to see your history!")
-
-    # Journey visualization
-    journey, distance = tutor.get_journey_progress(st.session_state.word_count, total_practice_words)
-    st.write("Journey to the Eiffel Tower:")
-    st.write(journey)
-    st.write(f"Distance remaining: {distance} steps")
-
-    # Show French jokes every 3 words
-    if st.session_state.word_count > 0 and st.session_state.word_count % 3 == 0:
-        with st.expander("😄 French Joke Break!", expanded=True):
-            st.write(tutor.get_french_joke())
-            st.write("Take a breath and continue your journey! 🎨")
 
     st.markdown("<br><hr><div style='text-align: center; color: gray; font-size: 0.8em; padding: 20px;'>Developed by LBC Productions</div>", unsafe_allow_html=True)
 
