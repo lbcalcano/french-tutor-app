@@ -23,16 +23,12 @@ st.markdown(hide_menu, unsafe_allow_html=True)
 # Clean navigation in sidebar
 with st.sidebar:
     st.markdown("### Navigation")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("🎮", help="Practice", use_container_width=True):
-            st.switch_page("french_tutor.py")
-    with col2:
-        if st.button("🏆", help="Leaderboard", use_container_width=True):
-            st.switch_page("pages/leaderboard.py")
-    with col3:
-        if st.button("📊", help="History", use_container_width=True):
-            st.switch_page("pages/history.py")
+    if st.button("🎮 Practice", use_container_width=True):
+        st.switch_page("french_tutor.py")
+    if st.button("🏆 Leaderboard", use_container_width=True):
+        st.switch_page("pages/leaderboard.py")
+    if st.button("📊 History", use_container_width=True):
+        st.switch_page("pages/history.py")
     st.write("---")
 
 st.title("🏆 French Masters Leaderboard")
