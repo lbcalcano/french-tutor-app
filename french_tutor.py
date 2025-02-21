@@ -428,15 +428,25 @@ class FrenchTutor:
         return random.choice(jokes)
 
     def get_journey_progress(self, word_count, total_words):
-        journey_length = 100
+        journey_length = 50  # Reduced for better visualization
         current_position = min(journey_length, int((word_count / total_words) * journey_length))
         
-        # Create journey visualization
-        journey = "🚶" + "‣" * current_position + "🗼"
+        # Create journey visualization with proper spacing
+        dots = "・" * (journey_length - current_position)  # Dots for remaining distance
+        walked = "•" * current_position  # Dots for covered distance
         
-        # Calculate distance
+        # Use simple emojis but with proper direction
+        journey_html = f"""
+        <div style="display: flex; align-items: center; font-family: monospace; font-size: 20px;">
+            <div style="transform: scaleX(-1);">👨</div>
+            <span style="margin: 0 10px;">{walked}{dots}</span>
+            <div>🗼</div>
+        </div>
+        """
+        
+        # Calculate remaining steps
         distance = journey_length - current_position
-        return journey, distance
+        return journey_html, distance
 
     def get_leaderboard(self):
         """Get top 10 users by rating"""
@@ -758,9 +768,9 @@ bailar,danser""")
         st.write(f"Word {st.session_state.word_count + 1} of {total_practice_words}")
         
         # Journey visualization
-        journey, distance = tutor.get_journey_progress(st.session_state.word_count, total_practice_words)
+        journey_html, distance = tutor.get_journey_progress(st.session_state.word_count, total_practice_words)
         st.write("Journey to the Eiffel Tower:")
-        st.write(journey)
+        st.markdown(journey_html, unsafe_allow_html=True)
         st.write(f"Distance remaining: {distance} steps")
         
         # Show French jokes every 3 words
