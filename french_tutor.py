@@ -438,6 +438,55 @@ class FrenchTutor:
         distance = journey_length - current_position
         return journey, distance
 
+    def get_leaderboard(self):
+        """Get top 10 users by rating"""
+        try:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            progress_db = os.path.join(script_dir, "french_progress.db")
+            
+            conn = sqlite3.connect(progress_db)
+            c = conn.cursor()
+            
+            # Get user progress and calculate ratings
+            c.execute('''
+                SELECT user_id,
+                       COUNT(DISTINCT word) as total_words,
+                       COUNT(CASE WHEN attempts = 1 THEN 1 END) as perfect_words
+                FROM progress
+                GROUP BY user_id
+            ''')
+            results = c.fetchall()
+            
+            # Calculate ratings and create leaderboard
+            leaderboard = []
+            for user_id, total_words, perfect_words in results:
+                # Skip guest users
+                if user_id.startswith('guest_'):
+                    continue
+                    
+                rating = (perfect_words / len(self.words) * 100) if len(self.words) > 0 else 0
+                leaderboard.append({
+                    'Username': user_id,
+                    'Words Mastered': perfect_words,
+                    'Total Progress': f"{(total_words / len(self.words) * 100):.1f}%",
+                    'Rating': rating
+                })
+            
+            # Sort by rating and get top 10
+            leaderboard.sort(key=lambda x: x['Rating'], reverse=True)
+            top_10 = leaderboard[:10]
+            
+            # Format ratings
+            for entry in top_10:
+                entry['Rating'] = f"{entry['Rating']:.1f}%"
+            
+            conn.close()
+            return top_10
+            
+        except Exception as e:
+            st.error(f"Could not get leaderboard: {str(e)}")
+            return []
+
 def main():
     st.set_page_config(
         page_title="French Tutor",
@@ -566,6 +615,40 @@ def main():
                 },
                 hide_index=True
             )
+
+    # Show Leaderboard
+    st.write("---")
+    with st.expander("🏆 Leaderboard - Top 10 French Masters", expanded=True):
+        leaderboard = tutor.get_leaderboard()
+        if leaderboard:
+            df = pd.DataFrame(leaderboard)
+            
+            # Add medal emojis for top 3
+            if len(df) > 0:
+                df['Rank'] = range(1, len(df) + 1)
+                df['Rank'] = df['Rank'].apply(lambda x: 
+                    "🥇 " + str(x) if x == 1 else
+                    "🥈 " + str(x) if x == 2 else
+                    "🥉 " + str(x) if x == 3 else
+                    "👏 " + str(x)
+                )
+            
+            st.dataframe(
+                df,
+                column_config={
+                    "Rank": st.column_config.TextColumn("Rank", width=70),
+                    "Username": st.column_config.TextColumn("User", width=150),
+                    "Words Mastered": st.column_config.NumberColumn("Mastered", width=100),
+                    "Total Progress": st.column_config.TextColumn("Progress", width=100),
+                    "Rating": st.column_config.TextColumn("Rating", width=100)
+                },
+                hide_index=True
+            )
+            
+            if st.session_state.username in df['Username'].values:
+                st.success("🌟 Congratulations! You're in the Top 10!")
+        else:
+            st.info("No rankings yet. Be the first to make the leaderboard!")
 
     # Main practice area
     if 'practice_mode' not in st.session_state:
