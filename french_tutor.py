@@ -406,6 +406,38 @@ class FrenchTutor:
             st.error(f"Could not get session history: {str(e)}")
             return []
 
+    def check_apostrophe_difference(self, user_input, correct_word):
+        """Check if the only difference is a missing apostrophe"""
+        user_no_apos = user_input.replace("'", "")
+        correct_no_apos = correct_word.replace("'", "")
+        return user_no_apos == correct_no_apos
+
+    def get_french_joke(self):
+        jokes = [
+            "Why don't French eggs tell jokes? Because they might crack up! 🥚",
+            "What do you call a French man wearing sandals? Philippe Philoppe! 👡",
+            "Why did the croissant go to the doctor? Because it was feeling flaky! 🥐",
+            "What do you call a French snake? A sssssilent one! 🐍",
+            "Why don't French people eat two eggs? Because in France, one egg is un oeuf! 🍳",
+            "What do you call a French man in sandals? Philippe Philoppe! 👡",
+            "Why did the Eiffel Tower go to the doctor? It had Paris-ites! 🗼",
+            "What's a French cat's favorite dessert? A chocolate mousse! 🐱",
+            "Why did the French chef cry? Because he ran out of thyme! 🌿",
+            "What do you call a French man with a baguette under each arm? A French arms dealer! 🥖"
+        ]
+        return random.choice(jokes)
+
+    def get_journey_progress(self, word_count, total_words):
+        journey_length = 100
+        current_position = min(journey_length, int((word_count / total_words) * journey_length))
+        
+        # Create journey visualization
+        journey = "🚶" + "‣" * current_position + "🗼"
+        
+        # Calculate distance
+        distance = journey_length - current_position
+        return journey, distance
+
 def main():
     st.set_page_config(
         page_title="French Tutor",
@@ -614,7 +646,16 @@ def main():
             
             if submit_button:
                 if user_input == st.session_state.current_word[1].lower():
-                    st.success("✨ Correct!")
+                    st.balloons()  # Add celebratory balloons
+                    st.success("✨ Correct! Magnifique! 🎨")
+                    progress_messages = [
+                        "You're getting closer to Paris! 🗼",
+                        "The Eiffel Tower awaits! ✨",
+                        "Your French is improving! 🎨",
+                        "Très bien! Keep going! 🎭",
+                        "You're becoming a French master! 🎪"
+                    ]
+                    st.write(random.choice(progress_messages))
                     st.session_state.word_stats[st.session_state.current_word[0]] = st.session_state.attempts + 1
                     tutor.save_progress()
                     time.sleep(2)
@@ -626,7 +667,11 @@ def main():
                 else:
                     st.session_state.attempts += 1
                     if st.session_state.attempts == 1:
-                        st.error("❌ Incorrect. Try once more!")
+                        # Check for apostrophe
+                        if tutor.check_apostrophe_difference(user_input, st.session_state.current_word[1].lower()):
+                            st.error("❌ Almost! Don't forget the apostrophe!")
+                        else:
+                            st.error("❌ Incorrect. Try once more!")
                         st.session_state.current_audio = tutor.speak_word(st.session_state.current_word[1])
                         time.sleep(1)
                         st.rerun()
@@ -667,6 +712,18 @@ def main():
         )
     else:
         st.info("No practice sessions yet. Start practicing to see your history!")
+
+    # Journey visualization
+    journey, distance = tutor.get_journey_progress(st.session_state.word_count, total_practice_words)
+    st.write("Journey to the Eiffel Tower:")
+    st.write(journey)
+    st.write(f"Distance remaining: {distance} steps")
+
+    # Show French jokes every 3 words
+    if st.session_state.word_count > 0 and st.session_state.word_count % 3 == 0:
+        with st.expander("😄 French Joke Break!", expanded=True):
+            st.write(tutor.get_french_joke())
+            st.write("Take a breath and continue your journey! 🎨")
 
     st.markdown("<br><hr><div style='text-align: center; color: gray; font-size: 0.8em; padding: 20px;'>Developed by LBC Productions</div>", unsafe_allow_html=True)
 
