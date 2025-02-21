@@ -487,6 +487,39 @@ class FrenchTutor:
             st.error(f"Could not get leaderboard: {str(e)}")
             return []
 
+    def add_words_from_csv(self, csv_content):
+        """Add new words from uploaded CSV"""
+        try:
+            # Read CSV content
+            import io
+            df = pd.read_csv(io.StringIO(csv_content.decode('utf-8')))
+            
+            # Validate columns
+            if not all(col in df.columns for col in ['spanish', 'french']):
+                raise ValueError("CSV must have 'spanish' and 'french' columns")
+            
+            # Load current words
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            csv_path = os.path.join(script_dir, 'french_words.csv')
+            
+            # Read existing words
+            existing_df = pd.read_csv(csv_path)
+            
+            # Combine and remove duplicates
+            combined_df = pd.concat([existing_df, df]).drop_duplicates(subset=['spanish', 'french'])
+            
+            # Save back to CSV
+            combined_df.to_csv(csv_path, index=False)
+            
+            # Reload words
+            self.load_words()
+            
+            return len(df), len(combined_df) - len(existing_df)
+            
+        except Exception as e:
+            st.error(f"Error processing CSV: {str(e)}")
+            return 0, 0
+
 def main():
     st.set_page_config(
         page_title="French Tutor",
@@ -579,6 +612,33 @@ def main():
     if tutor.is_admin(st.session_state.username):
         st.write("---")
         st.subheader("👑 Admin Dashboard")
+        
+        # Add word upload section
+        st.write("### 📝 Add New Words")
+        uploaded_file = st.file_uploader(
+            "Upload CSV file with new words (must have 'spanish' and 'french' columns)",
+            type=['csv']
+        )
+        
+        if uploaded_file is not None:
+            file_contents = uploaded_file.read()
+            total_words, new_words = tutor.add_words_from_csv(file_contents)
+            if total_words > 0:
+                st.success(f"✅ Processed {total_words} words, added {new_words} new words!")
+                st.info("Reload the page to see the updated word list.")
+        
+        with st.expander("CSV Format Example"):
+            st.code("""spanish,french
+comer,manger
+dormir,dormir
+bailar,danser""")
+            st.download_button(
+                "📥 Download Template",
+                "spanish,french\ncomer,manger\ndormir,dormir\nbailar,danser",
+                "template.csv",
+                "text/csv",
+                key='download-template'
+            )
         
         stats = tutor.get_user_stats()
         if stats:
