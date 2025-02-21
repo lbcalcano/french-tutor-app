@@ -559,13 +559,18 @@ def main():
         page_title="French Tutor",
         page_icon="🇫🇷",
         initial_sidebar_state="expanded",
-        menu_items={
-            'Get Help': None,
-            'Report a bug': None,
-            'About': None
-        },
         layout="wide"
     )
+    
+    # Add page navigation in sidebar
+    with st.sidebar:
+        st.write("📚 Navigation")
+        if st.button("🎮 Practice", use_container_width=True):
+            st.switch_page("french_tutor.py")
+        if st.button("🏆 Leaderboard", use_container_width=True):
+            st.switch_page("pages/leaderboard.py")
+        if st.button("📊 History", use_container_width=True):
+            st.switch_page("pages/history.py")
     
     # Initialize app
     tutor = FrenchTutor()
@@ -710,40 +715,6 @@ bailar,danser""")
                 hide_index=True
             )
 
-    # Show Leaderboard
-    st.write("---")
-    with st.expander("🏆 Leaderboard - Top 10 French Masters", expanded=True):
-        leaderboard = tutor.get_leaderboard()
-        if leaderboard:
-            df = pd.DataFrame(leaderboard)
-            
-            # Add medal emojis for top 3
-            if len(df) > 0:
-                df['Rank'] = range(1, len(df) + 1)
-                df['Rank'] = df['Rank'].apply(lambda x: 
-                    "🥇 " + str(x) if x == 1 else
-                    "🥈 " + str(x) if x == 2 else
-                    "🥉 " + str(x) if x == 3 else
-                    "👏 " + str(x)
-                )
-            
-            st.dataframe(
-                df,
-                column_config={
-                    "Rank": st.column_config.TextColumn("Rank", width=70),
-                    "Username": st.column_config.TextColumn("User", width=150),
-                    "Words Mastered": st.column_config.NumberColumn("Mastered", width=100),
-                    "Total Progress": st.column_config.TextColumn("Progress", width=100),
-                    "Rating": st.column_config.TextColumn("Rating", width=100)
-                },
-                hide_index=True
-            )
-            
-            if st.session_state.username in df['Username'].values:
-                st.success("🌟 Congratulations! You're in the Top 10!")
-        else:
-            st.info("No rankings yet. Be the first to make the leaderboard!")
-
     # Main practice area
     if 'practice_mode' not in st.session_state:
         st.session_state.practice_mode = False
@@ -875,26 +846,6 @@ bailar,danser""")
             st.session_state.current_word = None
             st.session_state.current_words = []
             st.rerun()
-
-    # Show session history
-    st.write("---")
-    st.subheader("📊 Practice History")
-    history = tutor.get_session_history(st.session_state.username)
-    if history:
-        df = pd.DataFrame(history)
-        st.dataframe(
-            df,
-            column_config={
-                "Date": st.column_config.TextColumn("Date", width=150),
-                "Words Attempted": st.column_config.NumberColumn("Attempted", width=100),
-                "Words Correct": st.column_config.NumberColumn("Correct", width=100),
-                "Perfect Words": st.column_config.NumberColumn("Perfect", width=100),
-                "Rating": st.column_config.TextColumn("Rating", width=100)
-            },
-            hide_index=True
-        )
-    else:
-        st.info("No practice sessions yet. Start practicing to see your history!")
 
     st.markdown("<br><hr><div style='text-align: center; color: gray; font-size: 0.8em; padding: 20px;'>Developed by LBC Productions</div>", unsafe_allow_html=True)
 
