@@ -15,6 +15,7 @@ hide_menu = """
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
+    div[data-testid="stSidebarNav"] {visibility: hidden;}
     </style>
 """
 st.markdown(hide_menu, unsafe_allow_html=True)
