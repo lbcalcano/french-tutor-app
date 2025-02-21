@@ -562,15 +562,20 @@ def main():
         layout="wide"
     )
     
-    # Add page navigation in sidebar
+    # Add navigation menu in sidebar
     with st.sidebar:
-        st.write("📚 Navigation")
-        if st.button("🎮 Practice", use_container_width=True):
-            st.switch_page("french_tutor.py")
-        if st.button("🏆 Leaderboard", use_container_width=True):
-            st.switch_page("pages/leaderboard.py")
-        if st.button("📊 History", use_container_width=True):
-            st.switch_page("pages/history.py")
+        selected = st.selectbox(
+            "📚 Navigation",
+            options=["🎮 Practice", "🏆 Leaderboard", "📊 History"],
+            index=0,  # Default to Practice
+            key="nav_select"
+        )
+        
+        if selected != "🎮 Practice":
+            if selected == "🏆 Leaderboard":
+                st.switch_page("pages/leaderboard.py")
+            else:  # History
+                st.switch_page("pages/history.py")
     
     # Initialize app
     tutor = FrenchTutor()
