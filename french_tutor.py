@@ -281,14 +281,16 @@ class FrenchTutor:
                 if is_guest:
                     guest_count += 1
                 
-                # Calculate rating
+                # Calculate rating based on total words in list
                 rating = (perfect / len(self.words) * 100) if len(self.words) > 0 else 0
+                remaining = len(self.words) - words
                 
                 user_stats.append({
                     'Username': user_id,
                     'Type': 'Guest' if is_guest else 'Registered',
                     'Words Practiced': words,
                     'Perfect Words': perfect,
+                    'Remaining Words': remaining,
                     'Rating': f"{rating:.1f}%",
                     'Last Active': datetime.fromisoformat(last_active).strftime('%Y-%m-%d %H:%M')
                 })
@@ -340,8 +342,9 @@ def main():
         completed = len([w for w in st.session_state.word_stats if st.session_state.word_stats[w] <= 2])
         perfect = len([w for w in st.session_state.word_stats if st.session_state.word_stats[w] == 1])
         
-        # Calculate rating
+        # Calculate rating based on total words in list
         rating_percentage = (perfect / total_words * 100) if total_words > 0 else 0
+        remaining_words = total_words - len(st.session_state.word_stats)
         
         # Display rating with appropriate emoji
         if rating_percentage >= 90:
@@ -359,6 +362,7 @@ def main():
         st.write(f"📚 Total words: {total_words}")
         st.write(f"✅ Completed: {completed}")
         st.write(f"⭐ Perfect first try: {perfect}")
+        st.write(f"📝 Remaining: {remaining_words}")
         
         # Add progress bar
         st.progress(rating_percentage / 100)
@@ -409,6 +413,7 @@ def main():
                     "Type": st.column_config.TextColumn("Type", width=100),
                     "Words Practiced": st.column_config.NumberColumn("Words", width=80),
                     "Perfect Words": st.column_config.NumberColumn("Perfect", width=80),
+                    "Remaining Words": st.column_config.NumberColumn("Remaining Words", width=100),
                     "Rating": st.column_config.TextColumn("Rating", width=100),
                     "Last Active": st.column_config.TextColumn("Last Active", width=150)
                 },
