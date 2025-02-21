@@ -48,6 +48,18 @@ class FrenchTutor:
                  last_updated TEXT)
             ''')
             
+            # Create session history table
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS session_history
+                (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                 user_id TEXT,
+                 session_date TEXT,
+                 words_attempted INTEGER,
+                 words_correct INTEGER,
+                 perfect_words INTEGER,
+                 rating REAL)
+            ''')
+            
             conn.commit()
             conn.close()
         except Exception as e:
@@ -72,8 +84,19 @@ class FrenchTutor:
         tab1, tab2 = st.tabs(["Login", "Register"])
         
         with tab1:
-            username = st.text_input("Username", key="login_username")
-            password = st.text_input("Password", type="password", key="login_password")
+            username = st.text_input(
+                "Username", 
+                key="login_username",
+                autocomplete="off",  # Prevent autocomplete
+                help="Username is case-sensitive"
+            ).strip()  # Remove any whitespace
+            
+            password = st.text_input(
+                "Password", 
+                type="password",
+                key="login_password",
+                autocomplete="off"  # Prevent autocomplete
+            ).strip()  # Remove any whitespace
             
             if st.button("Login", key="login_button"):
                 if self.verify_credentials(username, password):
@@ -83,9 +106,25 @@ class FrenchTutor:
                     st.error("Invalid username or password")
         
         with tab2:
-            new_username = st.text_input("Choose Username", key="reg_username")
-            new_password = st.text_input("Choose Password", type="password", key="reg_password")
-            confirm_password = st.text_input("Confirm Password", type="password", key="reg_confirm")
+            new_username = st.text_input(
+                "Choose Username",
+                key="reg_username",
+                autocomplete="off"
+            ).strip()
+            
+            new_password = st.text_input(
+                "Choose Password",
+                type="password",
+                key="reg_password",
+                autocomplete="off"
+            ).strip()
+            
+            confirm_password = st.text_input(
+                "Confirm Password",
+                type="password",
+                key="reg_confirm",
+                autocomplete="off"
+            ).strip()
             
             if st.button("Register", key="register_button"):
                 if self.register_user(new_username, new_password, confirm_password):
@@ -308,8 +347,78 @@ class FrenchTutor:
             st.error(f"Could not get user statistics: {str(e)}")
             return None
 
+    def save_session_history(self):
+        try:
+            if 'username' not in st.session_state:
+                return
+                
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            db_path = os.path.join(script_dir, "french_progress.db")
+            
+            # Calculate session stats
+            words_attempted = len(st.session_state.current_words)
+            words_correct = len([w for w in st.session_state.word_stats if st.session_state.word_stats[w] <= 2])
+            perfect_words = len([w for w in st.session_state.word_stats if st.session_state.word_stats[w] == 1])
+            rating = (perfect_words / len(self.words) * 100) if len(self.words) > 0 else 0
+            
+            conn = sqlite3.connect(db_path)
+            c = conn.cursor()
+            
+            c.execute('''
+                INSERT INTO session_history 
+                (user_id, session_date, words_attempted, words_correct, perfect_words, rating)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (st.session_state.username, datetime.now().isoformat(), 
+                 words_attempted, words_correct, perfect_words, rating))
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            st.error(f"Could not save session history: {str(e)}")
+
+    def get_session_history(self, username):
+        try:
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            db_path = os.path.join(script_dir, "french_progress.db")
+            
+            conn = sqlite3.connect(db_path)
+            c = conn.cursor()
+            
+            c.execute('''
+                SELECT session_date, words_attempted, words_correct, perfect_words, rating
+                FROM session_history
+                WHERE user_id = ?
+                ORDER BY session_date DESC
+            ''', (username,))
+            
+            results = c.fetchall()
+            conn.close()
+            
+            return [{
+                'Date': datetime.fromisoformat(date).strftime('%Y-%m-%d %H:%M'),
+                'Words Attempted': attempted,
+                'Words Correct': correct,
+                'Perfect Words': perfect,
+                'Rating': f"{rating:.1f}%"
+            } for date, attempted, correct, perfect, rating in results]
+            
+        except Exception as e:
+            st.error(f"Could not get session history: {str(e)}")
+            return []
+
 def main():
-    st.set_page_config(page_title="French Tutor", page_icon="🇫🇷")
+    st.set_page_config(
+        page_title="French Tutor",
+        page_icon="🇫🇷",
+        initial_sidebar_state="expanded",
+        menu_items={
+            'Get Help': None,
+            'Report a bug': None,
+            'About': None
+        },
+        layout="wide",
+        theme="dark"  # Set dark theme as default
+    )
     
     # Initialize app
     tutor = FrenchTutor()
@@ -337,6 +446,13 @@ def main():
         
     # Sidebar with statistics
     with st.sidebar:
+        # Add logout button at the top
+        if 'username' in st.session_state:
+            if st.button("🚪 Logout", key="logout_button"):
+                for key in list(st.session_state.keys()):
+                    del st.session_state[key]
+                st.rerun()
+            
         st.header("Progress")
         total_words = len(tutor.words)
         completed = len([w for w in st.session_state.word_stats if st.session_state.word_stats[w] <= 2])
@@ -527,10 +643,31 @@ def main():
                         st.rerun()
         
         if st.button("Quit Practice"):
+            tutor.save_session_history()
             st.session_state.practice_mode = False
             st.session_state.current_word = None
             st.session_state.current_words = []
             st.rerun()
+
+    # Show session history
+    st.write("---")
+    st.subheader("📊 Practice History")
+    history = tutor.get_session_history(st.session_state.username)
+    if history:
+        df = pd.DataFrame(history)
+        st.dataframe(
+            df,
+            column_config={
+                "Date": st.column_config.TextColumn("Date", width=150),
+                "Words Attempted": st.column_config.NumberColumn("Attempted", width=100),
+                "Words Correct": st.column_config.NumberColumn("Correct", width=100),
+                "Perfect Words": st.column_config.NumberColumn("Perfect", width=100),
+                "Rating": st.column_config.TextColumn("Rating", width=100)
+            },
+            hide_index=True
+        )
+    else:
+        st.info("No practice sessions yet. Start practicing to see your history!")
 
     st.markdown("<br><hr><div style='text-align: center; color: gray; font-size: 0.8em; padding: 20px;'>Developed by LBC Productions</div>", unsafe_allow_html=True)
 
