@@ -416,8 +416,7 @@ def main():
             'Report a bug': None,
             'About': None
         },
-        layout="wide",
-        theme="dark"  # Set dark theme as default
+        layout="wide"
     )
     
     # Initialize app
