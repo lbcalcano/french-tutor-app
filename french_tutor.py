@@ -274,9 +274,40 @@ def main():
         completed = len([w for w in st.session_state.word_stats if st.session_state.word_stats[w] <= 2])
         perfect = len([w for w in st.session_state.word_stats if st.session_state.word_stats[w] == 1])
         
+        # Calculate rating
+        rating_percentage = (perfect / total_words * 100) if total_words > 0 else 0
+        
+        # Display rating with appropriate emoji
+        if rating_percentage >= 90:
+            rating_emoji = "🏆"
+        elif rating_percentage >= 80:
+            rating_emoji = "🥇"
+        elif rating_percentage >= 70:
+            rating_emoji = "🥈"
+        elif rating_percentage >= 60:
+            rating_emoji = "🥉"
+        else:
+            rating_emoji = "📚"
+            
+        st.write(f"📊 Rating: {rating_emoji} {rating_percentage:.1f}%")
         st.write(f"📚 Total words: {total_words}")
         st.write(f"✅ Completed: {completed}")
         st.write(f"⭐ Perfect first try: {perfect}")
+        
+        # Add progress bar
+        st.progress(rating_percentage / 100)
+        
+        # Add rating explanation
+        with st.expander("About Rating"):
+            st.write("""
+            - 🏆 90-100%: Master
+            - 🥇 80-89%: Expert
+            - 🥈 70-79%: Advanced
+            - 🥉 60-69%: Intermediate
+            - 📚 0-59%: Learning
+            
+            Only words answered correctly on first try count towards your rating.
+            """)
 
     # Main practice area
     if 'practice_mode' not in st.session_state:
