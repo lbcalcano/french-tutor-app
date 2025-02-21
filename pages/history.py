@@ -7,22 +7,22 @@ st.set_page_config(
     layout="wide"
 )
 
-# Add navigation menu in sidebar
+# Clean navigation in sidebar
 with st.sidebar:
-    selected = st.selectbox(
-        "📚 Navigation",
-        options=["🎮 Practice", "🏆 Leaderboard", "📊 History"],
-        index=2,  # Default to History
-        key="nav_select"
-    )
-    
-    if selected != "📊 History":
-        if selected == "🎮 Practice":
+    st.markdown("### Navigation")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("🎮", help="Practice", use_container_width=True):
             st.switch_page("french_tutor.py")
-        else:  # Leaderboard
+    with col2:
+        if st.button("🏆", help="Leaderboard", use_container_width=True):
             st.switch_page("pages/leaderboard.py")
+    with col3:
+        if st.button("📊", help="History", use_container_width=True):
+            st.switch_page("pages/history.py")
+    st.write("---")
 
-st.title("�� Practice History")
+st.title("📊 Practice History")
 
 tutor = FrenchTutor()
 if 'username' in st.session_state:
