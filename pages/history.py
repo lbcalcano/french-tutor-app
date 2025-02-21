@@ -3,9 +3,20 @@ from french_tutor import FrenchTutor
 
 st.set_page_config(
     page_title="French Tutor - History",
-    page_icon="📊",
-    layout="wide"
+    page_icon="��",
+    layout="wide",
+    menu_items=None  # This will hide the default menu
 )
+
+# Hide streamlit default menu and footer
+hide_menu = """
+    <style>
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    </style>
+"""
+st.markdown(hide_menu, unsafe_allow_html=True)
 
 # Clean navigation in sidebar
 with st.sidebar:
