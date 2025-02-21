@@ -465,11 +465,12 @@ def main():
         # Display Spanish word
         st.markdown(f"### 🇪🇸 Spanish: {st.session_state.current_word[0]}")
         
-        # Add hint button
-        if st.button("💡 Hint (Listen to French pronunciation)"):
-            st.session_state.show_hint = True
-            st.session_state.current_audio = tutor.speak_word(st.session_state.current_word[1])
-            st.rerun()
+        # Only show hint button after first wrong attempt
+        if st.session_state.attempts == 1:
+            if st.button("💡 Hint (Listen to French pronunciation)"):
+                st.session_state.show_hint = True
+                st.session_state.current_audio = tutor.speak_word(st.session_state.current_word[1])
+                st.rerun()
         
         # Only show audio after wrong attempt or hint
         if (st.session_state.attempts > 0 or st.session_state.get('show_hint', False)) and st.session_state.current_audio is not None:
