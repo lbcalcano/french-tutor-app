@@ -414,16 +414,40 @@ class FrenchTutor:
 
     def get_french_joke(self):
         jokes = [
-            "Why don't French eggs tell jokes? Because they might crack up! 🥚",
-            "What do you call a French man wearing sandals? Philippe Philoppe! 👡",
-            "Why did the croissant go to the doctor? Because it was feeling flaky! 🥐",
-            "What do you call a French snake? A sssssilent one! 🐍",
+            # French Food Jokes
             "Why don't French people eat two eggs? Because in France, one egg is un oeuf! 🍳",
-            "What do you call a French man in sandals? Philippe Philoppe! 👡",
-            "Why did the Eiffel Tower go to the doctor? It had Paris-ites! 🗼",
             "What's a French cat's favorite dessert? A chocolate mousse! 🐱",
             "Why did the French chef cry? Because he ran out of thyme! 🌿",
-            "What do you call a French man with a baguette under each arm? A French arms dealer! 🥖"
+            "What did the French baker say when his bread went missing? I'm in pain! 🥖",
+            "What's a French snail's favorite food? Escargot-t away! 🐌",
+            
+            # French Culture Jokes
+            "Why did the French man put on two jackets? Because he was told to Deuxble up! 👔",
+            "What do you call a French man in sandals? Philippe Philoppe! 👡",
+            "Why did the French man get kicked out of the library? Because he was speaking in volumes! 📚",
+            "What's a French ghost's favorite game? Hide and Boo-langerie! 👻",
+            "Why don't French people like fast food? Because they prefer to escargot slowly! 🐌",
+            
+            # French Language Jokes
+            "What do you call a French man with a baguette under each arm? A French arms dealer! 🥖",
+            "Why did the French student bring a ladder to class? They wanted to reach the top of their conjugations! 📚",
+            "What's a French person's favorite type of party? A soirée! 🎉",
+            "Why did the French dictionary go to the doctor? It had too many appendixes! 📖",
+            "What's a French person's favorite math subject? Géométrie! 📐",
+            
+            # Paris Jokes
+            "Why did the Eiffel Tower go to the doctor? It had Paris-ites! 🗼",
+            "What's the Eiffel Tower's favorite music? Heavy metal! 🎸",
+            "Why did the croissant go to Paris? To get a butter view! 🥐",
+            "What's the Seine River's favorite type of music? Flow-k! 🌊",
+            "Why did the baguette go to the Louvre? To get cultured! 🏛️",
+            
+            # French Art Jokes
+            "Why did the French painter refuse to use blue? He was going through a phase! 🎨",
+            "What's Monet's favorite weather? Cloudy with a chance of Water Lilies! 🌺",
+            "Why did Van Gogh visit France? He wanted to Gogh see the sights! 🎨",
+            "What's a French artist's favorite drink? Paint-eau! 🖌️",
+            "Why did the French sculpture feel lonely? It was just a bust! 🗿"
         ]
         return random.choice(jokes)
 
@@ -767,17 +791,11 @@ bailar,danser""")
         total_practice_words = len(st.session_state.current_words)
         st.write(f"Word {st.session_state.word_count + 1} of {total_practice_words}")
         
-        # Journey visualization
-        journey_html, distance = tutor.get_journey_progress(st.session_state.word_count, total_practice_words)
-        st.write("Journey to the Eiffel Tower:")
-        st.markdown(journey_html, unsafe_allow_html=True)
-        st.write(f"Distance remaining: {distance} steps")
-        
-        # Show French jokes every 3 words
-        if st.session_state.word_count > 0 and st.session_state.word_count % 3 == 0:
+        # Show French jokes randomly (about 30% chance)
+        if random.random() < 0.3:  # 30% chance to show a joke
             with st.expander("😄 French Joke Break!", expanded=True):
                 st.write(tutor.get_french_joke())
-                st.write("Take a breath and continue your journey! 🎨")
+                st.write("Take a breath and continue learning! 🎨")
         
         # Display Spanish word
         st.markdown(f"### 🇪🇸 Spanish: {st.session_state.current_word[0]}")
